@@ -26,7 +26,8 @@ camera.position.set(6, 8, 14);
 orbit.update();
 
 const uniforms = {
-    u_time: { value: 0.0 }
+    u_time: { value: 0.0 },
+    u_frequency: { value: 0.0 },
 };
 
 const mat = new THREE.ShaderMaterial({
@@ -56,6 +57,8 @@ const analyser = new THREE.AudioAnalyser(sound, 32);
 
 const clock = new THREE.Clock();
 function animate() {
+    uniforms.u_frequency.value = analyser.getAverageFrequency();
+
     uniforms.u_time.value = clock.getElapsedTime();
     renderer.render(scene, camera);
 }

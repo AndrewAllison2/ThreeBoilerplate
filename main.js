@@ -5,6 +5,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass';
+import { GUI } from 'dat.gui';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -21,16 +22,24 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 
+const params = {
+    red: 1.0,
+    green: 1.0,
+    blue: 1.0,
+    threshold: 0.5,
+    strength: 0.4,
+    radius: 0.8,
+};
+
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const renderScene = new RenderPass(scene, camera);
 
-const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight)
-);
-bloomPass.threshold = 0.5;
-bloomPass.strength = 0.4;
-bloomPass.radius = 0.8;
+// @ts-ignore
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight));
+bloomPass.threshold = params.threshold;
+bloomPass.strength = params.strength;
+bloomPass.radius = params.radius;
 
 const outputPass = new OutputPass();
 
@@ -51,11 +60,40 @@ orbit.update();
 const uniforms = {
     u_time: { value: 0.0 },
     u_frequency: { value: 0.0 },
+    u_red: { value: params.red },
+    u_green: { value: params.green },
+    u_blue: { value: params.blue },
 };
+
+const gui = new GUI();
+
+const colorsFolder = gui.addFolder('Colors');
+colorsFolder.add(params, 'red', 0, 1).onChange(function (value) {
+    uniforms.u_red.value = Number(value);
+});
+colorsFolder.add(params, 'green', 0, 1).onChange(function (value) {
+    uniforms.u_green.value = Number(value);
+});
+colorsFolder.add(params, 'blue', 0, 1).onChange(function (value) {
+    uniforms.u_blue.value = Number(value);
+});
+
+const bloomFolder = gui.addFolder('Bloom');
+bloomFolder.add(params, 'threshold', 0, 1).onChange(function (value) {
+    bloomPass.threshold = Number(value);
+});
+bloomFolder.add(params, 'strength', 0, 3).onChange(function (value) {
+    bloomPass.strength = Number(value);
+});
+bloomFolder.add(params, 'radius', 0, 1).onChange(function (value) {
+    bloomPass.radius = Number(value);
+});
 
 const mat = new THREE.ShaderMaterial({
     wireframe: true,
+    // @ts-ignore
     vertexShader: document.getElementById('vertexshader')?.textContent,
+    // @ts-ignore
     fragmentShader: document.getElementById('fragmentshader')?.textContent
 });
 

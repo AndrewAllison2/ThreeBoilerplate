@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wael Yasmina</title>
+    <title>ThreeJS Visualizer</title>
     <style>
         body {
             margin: 0;
@@ -107,9 +107,12 @@
         float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
         return 2.2 * n_xyz;
       }
+
+    uniform float u_time;
     
       void main() {
-  float noise = pnoise(position, vec3(10.));
+  float noise = 5. * pnoise(position, vec3(10.));
+
   float displacement = noise / 10.;
   vec3 newPosition = position + normal * displacement;
 

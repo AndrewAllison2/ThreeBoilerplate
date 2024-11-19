@@ -21,6 +21,25 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const renderScene = new RenderPass(scene, camera);
+
+const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight)
+);
+bloomPass.threshold = 0.5;
+bloomPass.strength = 0.4;
+bloomPass.radius = 0.8;
+
+const outputPass = new OutputPass();
+
+const bloomComposer = new EffectComposer(renderer);
+
+bloomComposer.addPass(renderScene);
+bloomComposer.addPass(bloomPass);
+bloomComposer.addPass(outputPass);
+
 // Sets orbit control to move the camera around.
 const orbit = new OrbitControls(camera, renderer.domElement);
 
@@ -60,12 +79,21 @@ audioLoader.load('/November 17.wav', function (buffer) {
 const analyser = new THREE.AudioAnalyser(sound, 32);
 
 const clock = new THREE.Clock();
-function animate() {
-    uniforms.u_frequency.value = analyser.getAverageFrequency();
 
+function animate() {
     uniforms.u_time.value = clock.getElapsedTime();
-    renderer.render(scene, camera);
+    uniforms.u_frequency.value = analyser.getAverageFrequency();
+    bloomComposer.render();
+    requestAnimationFrame(animate);
 }
+animate();
+
+window.addEventListener('resize', function () {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    bloomComposer.setSize(window.innerWidth, window.innerHeight);
+});
 
 renderer.setAnimationLoop(animate);
 

@@ -2,19 +2,19 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ThreeJS Visualizer</title>
-    <style>
-        body {
-            margin: 0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThreeJS Visualizer</title>
+  <style>
+    body {
+      margin: 0;
+    }
+  </style>
 </head>
 
 <body>
-    <script id="vertexshader" type="vertex">
+  <script id="vertexshader" type="vertex">
       vec3 mod289(vec3 x)
       {
         return x - floor(x * (1.0 / 289.0)) * 289.0;
@@ -121,15 +121,15 @@ void main() {
     }
     </script>
 
-    <script id="fragmentshader" type="fragment">
-        uniform float u_red;
-        uniform float u_blue;
-        uniform float u_green;
-        void main() {
-    gl_FragColor = vec4(vec3(u_red, u_green, u_blue), 1. );
-    }
-    </script>
-    <script src="/main.js" type="module"></script>
+  <script id="fragmentshader" type="fragment">
+  uniform float u_red;
+  uniform float u_blue;
+  uniform float u_green;
+  void main() {
+      gl_FragColor = vec4(vec3(u_red, u_green, u_blue), 1. );
+  }
+        </script>
+  <script src="/main.js" type="module"></script>
 </body>
 
 </html>

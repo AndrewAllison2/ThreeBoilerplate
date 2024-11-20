@@ -1,18 +1,14 @@
 import * as THREE from 'three';
-import { ThreeMFLoader } from "three/examples/jsm/Addons.js";
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GUI } from 'dat.gui';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass';
-import { GUI } from 'dat.gui';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-
-// Sets the color of the background.
-// renderer.setClearColor(0xFEFEFE);
+//renderer.setClearColor(0x222222);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -27,43 +23,64 @@ const params = {
     green: 1.0,
     blue: 1.0,
     threshold: 0.5,
-    strength: 0.4,
-    radius: 0.8,
-};
+    strength: 0.5,
+    radius: 0.8
+}
 
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const renderScene = new RenderPass(scene, camera);
 
-// @ts-ignore
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight));
 bloomPass.threshold = params.threshold;
 bloomPass.strength = params.strength;
 bloomPass.radius = params.radius;
 
-const outputPass = new OutputPass();
-
 const bloomComposer = new EffectComposer(renderer);
-
 bloomComposer.addPass(renderScene);
 bloomComposer.addPass(bloomPass);
+
+const outputPass = new OutputPass();
 bloomComposer.addPass(outputPass);
 
-// Sets orbit control to move the camera around.
-const orbit = new OrbitControls(camera, renderer.domElement);
-
-// Camera positioning.
-camera.position.set(6, 8, 14);
-// Has to be done everytime we update the camera position.
-orbit.update();
+camera.position.set(0, -2, 14);
+camera.lookAt(0, 0, 0);
 
 const uniforms = {
-    u_time: { value: 0.0 },
-    u_frequency: { value: 0.0 },
-    u_red: { value: params.red },
-    u_green: { value: params.green },
-    u_blue: { value: params.blue },
-};
+    u_time: { type: 'f', value: 0.0 },
+    u_frequency: { type: 'f', value: 0.0 },
+    u_red: { type: 'f', value: 1.0 },
+    u_green: { type: 'f', value: 1.0 },
+    u_blue: { type: 'f', value: 1.0 }
+}
+
+const mat = new THREE.ShaderMaterial({
+    uniforms,
+    // @ts-ignore
+    vertexShader: document.getElementById('vertexshader').textContent,
+    // @ts-ignore
+    fragmentShader: document.getElementById('fragmentshader').textContent
+});
+
+const geo = new THREE.IcosahedronGeometry(4, 30);
+const mesh = new THREE.Mesh(geo, mat);
+scene.add(mesh);
+mesh.material.wireframe = true;
+
+const listener = new THREE.AudioListener();
+camera.add(listener);
+
+const sound = new THREE.Audio(listener);
+
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load('./November 17.wav', function (buffer) {
+    sound.setBuffer(buffer);
+    window.addEventListener('click', function () {
+        sound.play();
+    });
+});
+
+const analyser = new THREE.AudioAnalyser(sound, 32);
 
 const gui = new GUI();
 
@@ -89,36 +106,20 @@ bloomFolder.add(params, 'radius', 0, 1).onChange(function (value) {
     bloomPass.radius = Number(value);
 });
 
-const mat = new THREE.ShaderMaterial({
-    wireframe: true,
-    // @ts-ignore
-    vertexShader: document.getElementById('vertexshader')?.textContent,
-    // @ts-ignore
-    fragmentShader: document.getElementById('fragmentshader')?.textContent
+let mouseX = 0;
+let mouseY = 0;
+document.addEventListener('mousemove', function (e) {
+    let windowHalfX = window.innerWidth / 2;
+    let windowHalfY = window.innerHeight / 2;
+    mouseX = (e.clientX - windowHalfX) / 100;
+    mouseY = (e.clientY - windowHalfY) / 100;
 });
-
-const geo = new THREE.IcosahedronGeometry(4, 30);
-const mesh = new THREE.Mesh(geo, mat);
-scene.add(mesh);
-
-const listener = new THREE.AudioListener();
-camera.add(listener);
-
-const sound = new THREE.Audio(listener);
-
-const audioLoader = new THREE.AudioLoader();
-audioLoader.load('/November 17.wav', function (buffer) {
-    sound.setBuffer(buffer);
-    window.addEventListener('click', function () {
-        sound.play();
-    });
-});
-
-const analyser = new THREE.AudioAnalyser(sound, 32);
 
 const clock = new THREE.Clock();
-
 function animate() {
+    camera.position.x += (mouseX - camera.position.x) * .05;
+    camera.position.y += (-mouseY - camera.position.y) * 0.5;
+    camera.lookAt(scene.position);
     uniforms.u_time.value = clock.getElapsedTime();
     uniforms.u_frequency.value = analyser.getAverageFrequency();
     bloomComposer.render();
@@ -131,12 +132,4 @@ window.addEventListener('resize', function () {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     bloomComposer.setSize(window.innerWidth, window.innerHeight);
-});
-
-renderer.setAnimationLoop(animate);
-
-window.addEventListener('resize', function () {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
 });
